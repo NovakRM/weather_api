@@ -26,55 +26,75 @@ $("#search-button").on("click", function(event) { //event listener for click on 
 
   function displayWeatherData(){
     let city = $(this).attr("data-city") //storing event target's attribute to a variable
-    
+    let openWeather = "https://api.openweathermap.org/data/2.5/weather?q="+city+"&appid="
     // Make ajax request 
         $.ajax({
             url: openWeather,
             method: "GET"
           }).then(function(response) { 
-            console.log("hiii :)") //checking that we're getting a response
-            console.log(response) //checking that we're getting an object 
-            $("#today").empty() //making sure Div is emptied for each request
+            //console.log("hiii :)") // checking that we're getting a response
+            //console.log(response) // checking that we're getting an object 
+            $("#today").empty() // making sure Div is emptied for each request so we don't repeat buttons
 
-            let headerBlock = $("<h4>").addClass("card-title") // create element <h3> class="card-title"
+            let headerBlock = $("<h4>").addClass("card-title") // create element <h4> class="card-title"
             let cityName = response.name
 
             let now = new Date()
             let date = ("(" + now.getMonth() + 1)+"/"+now.getDate()+"/"+now.getFullYear()+")"
 
             let icon = $("<img>")
-            icon.attr("src", response.main.icon) //not appending right, we'll look later
-            
-            headerBlock.append(cityName," ",date," ",icon) // append variables to <h3>
+            icon.attr("src","http://openweathermap.org/img/wn/" + response.weather[0].icon + "@2x.png")
+            headerBlock.append(icon)
+
+            headerBlock.prepend(cityName," ",date) // append variables to <h3>, prepending because I want these to appear before icon
             $("#today").append(headerBlock) // append <h3> to #today div
             $("#today").addClass("mt-3 bg-light border rounded p-2") // class and style
-          })
+          
+            //===== Current Conditions =====//
+            let moment = $("<div>").addClass("moment") // create element <div> class="daily" ? For sake of organization while appending, would probably be fine being appended to parent element but eh
+            let parseTemp = parseInt(1.8*(response.main.temp-273)+32)
+            let dailyTemp = $("<p>").text("Temperature: " + parseTemp + "°F") // create <p>  ="dailyTemp", text = "temperature " + attach today's temperature 
+            let dailyHum = $("<p>").text("Humidity: " + response.main.humidity + "%") // create <p> = "dailyHum", text = "humidity " + attach today's humidity 
+            let windSpd = $("<p>").text("Wind Spd: " + response.wind.speed) // create <p> = "dailyWind", text = "wind speed " + attach today's wind speed
 
-        //===== Current Conditions =====//
-
-        let daily = $("<div>").addClass("daily") // create element <div> class="daily" ? For sake of organization while appending, would probably be fine being appended to parent element but eh
-        let parseTemp = parseInt(1.8*(response.main.temp-273)+32) //not being pointed to right, confused
-        console.log(response.main.temp)
-        let dailyTemp = $("<p>").text(parseTemp)
-        daily.append(dailyTemp)
-        $("#today").append(daily)
-        // create <p> ID="dailyTemp", text = "temperature " + attach today's temperature 
-        // create <p> ID="dailyHum", text = "humidity " + attach today's humidity  
-        // create <p> ID="dailyWind", text = "wind speed " + attach today's wind speed
-        // create <p> ID="uvIndex", text = "UV index " + attach today's wind speed 
-            //conditionals for favorable, moderate, or severe [add classes for success, warning, danger]
-        // append all items to <div> class="daily"
-        // append <div> class="daily" to #today div
-
+            // Desean and Bryan explained this one to me, need to call the other part of the API with the UVI: 
+            let oneCallURL = "https://api.openweathermap.org/data/2.5/onecall?lat="+ response.coord.lat + "&lon=" + response.coord.lon + "&exclude=alerts&appid=";
+            $.ajax({
+                url: oneCallURL,
+                method: "GET"
+              }).then(function(response) {
+                console.log(response);
+                let dailyUV = $("<p>").text("UVI: " + response.current.uvi)
+                    if (parseInt(response.current.uvi) < 3) { //conditionals for favorable, moderate, or severe [add classes for success, warning, danger]
+                      dailyUV.attr("class", "bg-success") 
+                    }else if(response.current.uvi < 8) {
+                      dailyUV.attr("class", "bg-warning")
+                    }else{
+                      dailyUV.attr("class", "bg-danger")
+                    }
+                  //UVI area DONE// :)
+            moment.append(dailyTemp, dailyHum, windSpd, dailyUV) // append all items to <div> class="daily"
+            $("#today").append(moment) // append <div> class="daily" to #today div        
+      
         //===== 5-Day Forecast =====//
-       // create element <h3> class="card-title" -- text = "5-day forecast"
-       // append element to #forecast div
+          $("#forecast").empty() // making sure Div is emptied for each request so we don't repeat buttons
+          $("#forecast").addClass("mt-3 bg-light border rounded p-2") // create element <div> with class of "card-group"
+          let forecastDiv = $("<div>").addClass("card-group")
+          let fiveDayHeading = $("<h4>").addClass("card-title").text("5-Day Forecast") // create element <h3> class="card-title" -- text = "5-day forecast"
+          $("#forecast").append(fiveDayHeading, forecastDiv)// append element to #forecast div
 
-        //for loop
-            // create element <div> with class of "card-group"
-            // create element <div> with class of "card", add style rules for white text and bg-primary I think.
-            // create <p> ID="date", text = parseInt the date so it shows up as a string? Or will it return the value as a string? Try string first. Have to consider this for all numbers actually, we'll find out
-            // create <p> ID="weatherIcon", get response for weather icon 
-            // create <p> ID="temp", text = "temp " + attach temperature  
-            // create <p> ID="hum", text = "humidity " + attach humidity  
-    }
+        for (let i= 1; i< 6; i++){// for loop, if i is less than six, add another forecast card
+          let forecastCard = $("<div>").addClass("mt-3 bg-primary text-light border rounded p-2") // create element <div> with class of "card", add style rules for white text and bg-primary I think.
+          let event = new Date(response.daily[i].dt*1000);
+          let week = $("<h5><strong>"+ event.toDateString() + "</strong></h5>") // create <p> ID="date", text = parseInt the date so it shows up as a string? Or will it return the value as a string? Try string first. Have to consider this for all numbers actually, we'll find out
+          // create <p> ID="weatherIcon", get response for weather icon CANT SEEM TO DO THIS ONE?   
+          let temp = (response.daily[i].temp.day)
+          temp = parseInt(1.8*(temp-273)+32)
+          tempForecast = $("<p>").text("Temperature: " + temp + "°F") // create <p> ID="temp", text = "temp " + attach temperature  
+          let humidity = $("<p>").text("Humidity: " + response.daily[i].humidity + "%") // create <p> ID="hum", text = "humidity " + attach humidity  
+          $(forecastCard).append(week, tempForecast, humidity) //append all to their card
+          $(forecastDiv).append(forecastCard) //append cards to cardgroup
+        }
+      })  
+    })
+  }
