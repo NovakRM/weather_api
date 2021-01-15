@@ -26,7 +26,7 @@ $("#search-button").on("click", function(event) { //event listener for click on 
 
   function displayWeatherData(){
     let city = $(this).attr("data-city") //storing event target's attribute to a variable
-    let openWeather = "https://api.openweathermap.org/data/2.5/weather?q="+city+"&appid="
+    let openWeather = "https://api.openweathermap.org/data/2.5/weather?q="+city+"&appid=4e95e51be70e4eb2e6a0802e49e7422f"
     // Make ajax request 
         $.ajax({
             url: openWeather,
@@ -58,7 +58,7 @@ $("#search-button").on("click", function(event) { //event listener for click on 
             let windSpd = $("<p>").text("Wind Spd: " + response.wind.speed) // create <p> = "dailyWind", text = "wind speed " + attach today's wind speed
 
             // Desean and Bryan explained this one to me, need to call the other part of the API with the UVI: 
-            let oneCallURL = "https://api.openweathermap.org/data/2.5/onecall?lat="+ response.coord.lat + "&lon=" + response.coord.lon + "&exclude=alerts&appid=";
+            let oneCallURL = "https://api.openweathermap.org/data/2.5/onecall?lat="+ response.coord.lat + "&lon=" + response.coord.lon + "&exclude=alerts&appid=4e95e51be70e4eb2e6a0802e49e7422f";
             $.ajax({
                 url: oneCallURL,
                 method: "GET"
